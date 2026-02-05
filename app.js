@@ -1,5 +1,5 @@
-// app.js (43문항: 보고서 표5-2 문구 기반)  :contentReference[oaicite:1]{index=1}
-// 역할(영역) 구분은 보고서에서 공통역량(11개) 등으로 제시된 구성을 따라 구성 :contentReference[oaicite:2]{index=2}
+// app.js - 43문항: 현재수준 + 이상적수준(요구수준) 2중 체크 + Gap 분석
+// Gap = 이상적(요구) - 현재(숙련). Gap이 클수록 교육 필요도가 큼
 
 const questions = [
   { id: "01", domain: "공통", competency: "NCS 활용 역량", text: "직무와 관련된 NCS 및 NCS 기반자격에 대해 이해하고, 일학습병행 훈련과정 개발에 활용할 수 있다." },
@@ -53,120 +53,167 @@ const questions = [
   { id: "43", domain: "교육과정운영자", competency: "훈련인프라 활용역량", text: "보유한 시설 장비를 적절하게 활용하고 시설장비를 목표시간 대비 활용할 수 있도록 관리할 수 있다." },
 ];
 
-// --- 화면 렌더링 ---
+function likert(name, checkedValue = null) {
+  return `
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin:6px 0 10px 0;">
+      ${[1,2,3,4,5].map(v => `
+        <label style="margin-right:6px;">
+          <input type="radio" name="${name}" value="${v}" ${checkedValue===v ? "checked": ""}/> ${v}
+        </label>
+      `).join("")}
+    </div>
+  `;
+}
+
 function renderQuestions() {
   const container = document.getElementById("questionList");
-  container.innerHTML = "";
+  container.innerHTML = `
+    <div style="font-size:13px; opacity:.85; margin-bottom:12px;">
+      <b>현재수준</b>은 현재 본인의 역량 수준, <b>이상적수준</b>은 업무 수행을 위해 필요하다고 생각하는 수준(요구수준)입니다.<br/>
+      각 문항에 대해 <b>현재수준 + 이상적수준</b>을 모두 선택해주세요. (1~5점)
+    </div>
+  `;
 
-  // 도메인별로 묶어서 보여주기
   const byDomain = {};
   for (const q of questions) {
     if (!byDomain[q.domain]) byDomain[q.domain] = [];
     byDomain[q.domain].push(q);
   }
 
-  for (const domain of Object.keys(byDomain)) {
+  Object.keys(byDomain).forEach(domain => {
     const h = document.createElement("h3");
     h.textContent = `✅ ${domain}`;
     container.appendChild(h);
 
-    byDomain[domain].forEach((q) => {
+    byDomain[domain].forEach(q => {
       const div = document.createElement("div");
       div.className = "q";
+      div.style.padding = "10px 0";
+      div.style.borderBottom = "1px solid #eee";
 
       div.innerHTML = `
-        <div style="font-weight:600; margin-bottom:6px;">
-          ${q.id}. ${q.competency}
-        </div>
-        <div style="margin-bottom:8px;">
-          ${q.text}
-        </div>
-        <div>
-          ${[1,2,3,4,5].map(v => `
-            <label style="margin-right:10px;">
-              <input type="radio" name="q${q.id}" value="${v}" /> ${v}
-            </label>
-          `).join("")}
+        <div style="font-weight:700; margin-bottom:6px;">${q.id}. ${q.competency}</div>
+        <div style="margin-bottom:10px;">${q.text}</div>
+
+        <div style="background:#f3f5f7; padding:10px; border-radius:10px;">
+          <div style="font-weight:600;">현재수준</div>
+          ${likert(`q${q.id}_cur`)}
+          <div style="font-weight:600;">이상적수준(요구수준)</div>
+          ${likert(`q${q.id}_ideal`)}
         </div>
       `;
+
       container.appendChild(div);
     });
-  }
+  });
 }
 
-function getAnswer(qid) {
-  const el = document.querySelector(`input[name="q${qid}"]:checked`);
+function getValue(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
   return el ? parseInt(el.value, 10) : null;
 }
 
 function submitTest() {
-  // 미응답 체크
+  // 미응답 체크(현재+이상 둘 다)
   const missing = [];
   for (const q of questions) {
-    if (getAnswer(q.id) == null) missing.push(q.id);
+    const cur = getValue(`q${q.id}_cur`);
+    const ideal = getValue(`q${q.id}_ideal`);
+    if (cur == null || ideal == null) missing.push(q.id);
   }
   if (missing.length) {
-    alert(`미응답 문항이 있어요: ${missing.join(", ")}\n(모든 문항에 1~5 선택 필요)`);
+    alert(`미응답 문항이 있어요: ${missing.join(", ")}\n(각 문항의 '현재수준'과 '이상적수준' 모두 선택 필요)`);
     return;
   }
 
-  // 도메인별 평균 계산
-  const byDomain = {};
-  for (const q of questions) {
-    const v = getAnswer(q.id);
-    if (!byDomain[q.domain]) byDomain[q.domain] = [];
-    byDomain[q.domain].push(v);
-  }
+  // 집계
+  const domainStats = {}; // {domain:{cur:[], ideal:[], gap:[]}}
+  const itemGaps = [];    // 문항별 gap 랭킹용
 
-  const domainAvg = {};
-  Object.keys(byDomain).forEach(d => {
-    const arr = byDomain[d];
-    domainAvg[d] = arr.reduce((a,b)=>a+b,0) / arr.length;
+  questions.forEach(q => {
+    const cur = getValue(`q${q.id}_cur`);
+    const ideal = getValue(`q${q.id}_ideal`);
+    const gap = ideal - cur;
+
+    if (!domainStats[q.domain]) domainStats[q.domain] = { cur: [], ideal: [], gap: [] };
+    domainStats[q.domain].cur.push(cur);
+    domainStats[q.domain].ideal.push(ideal);
+    domainStats[q.domain].gap.push(gap);
+
+    itemGaps.push({
+      id: q.id,
+      domain: q.domain,
+      competency: q.competency,
+      cur,
+      ideal,
+      gap
+    });
   });
 
-  // 전체 평균
-  const all = questions.map(q => getAnswer(q.id));
-  const overall = all.reduce((a,b)=>a+b,0) / all.length;
+  const avg = (arr) => arr.reduce((a,b)=>a+b,0) / arr.length;
+
+  const domains = Object.keys(domainStats);
+  const domainCur = domains.map(d => avg(domainStats[d].cur));
+  const domainIdeal = domains.map(d => avg(domainStats[d].ideal));
+  const domainGap = domains.map(d => avg(domainStats[d].gap));
+
+  const overallCur = avg(itemGaps.map(x => x.cur));
+  const overallIdeal = avg(itemGaps.map(x => x.ideal));
+  const overallGap = avg(itemGaps.map(x => x.gap));
 
   // 결과 표시
   document.getElementById("result").style.display = "block";
   document.getElementById("summary").textContent =
-    `전체 평균: ${overall.toFixed(2)} / 5.00`;
+    `전체 평균(현재): ${overallCur.toFixed(2)} / 5.00 · 전체 평균(이상): ${overallIdeal.toFixed(2)} / 5.00 · 전체 평균(Gap): ${overallGap.toFixed(2)}`;
 
-  // 차트(도메인별 평균)
+  // 차트: 도메인별 Gap (교육 필요도)
   if (window._chart) window._chart.destroy();
-  const labels = Object.keys(domainAvg);
-  const data = labels.map(l => domainAvg[l]);
-
   const ctx = document.getElementById("chart").getContext("2d");
   window._chart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels,
-      datasets: [{ label: "도메인 평균(1~5)", data }]
+      labels: domains,
+      datasets: [
+        { label: "Gap 평균(이상-현재)", data: domainGap.map(x => Number(x.toFixed(2))) }
+      ]
     },
-    options: {
-      scales: { y: { min: 1, max: 5 } }
-    }
+    options: { scales: { y: { min: -4, max: 4 } } }
   });
 
-  // 간단 추천(낮은 도메인 2개)
-  const sorted = labels
-    .map(l => ({ domain: l, avg: domainAvg[l] }))
-    .sort((a,b)=>a.avg - b.avg);
+  // 문항별 Gap TOP 10 (교육 필요 역량)
+  itemGaps.sort((a,b) => b.gap - a.gap);
+  const top = itemGaps.slice(0, 10);
+
+  // 도메인별 Gap 우선순위 2개
+  const domainRank = domains
+    .map((d, i) => ({ domain: d, gap: domainGap[i] }))
+    .sort((a,b) => b.gap - a.gap);
 
   const recommend = document.getElementById("recommend");
   recommend.innerHTML = `
-    <h3>추천(개선 우선)</h3>
+    <h3>교육 필요도(격차) 기반 추천</h3>
+    <div style="margin-bottom:10px;">
+      <b>우선 개선 도메인</b>: 
+      1) ${domainRank[0].domain} (Gap ${domainRank[0].gap.toFixed(2)}) · 
+      2) ${domainRank[1].domain} (Gap ${domainRank[1].gap.toFixed(2)})
+    </div>
+
+    <b>교육 필요 역량 TOP 10 (Gap 큰 순)</b>
     <ol>
-      <li>${sorted[0].domain} (평균 ${sorted[0].avg.toFixed(2)})</li>
-      <li>${sorted[1].domain} (평균 ${sorted[1].avg.toFixed(2)})</li>
+      ${top.map(x => `
+        <li>
+          [${x.domain}] ${x.competency} — 현재 ${x.cur}, 이상 ${x.ideal}, Gap <b>${x.gap}</b>
+        </li>
+      `).join("")}
     </ol>
-    <div style="font-size:13px; opacity:.8;">
-      * 다음 단계에서 “경력(1년 미만/1~2년/2~4년/4년 이상)” + “수요조사 결과”까지 붙여서 추천을 더 정확하게 만들 수 있어요.
+
+    <div style="font-size:13px; opacity:.85;">
+      * Gap(이상-현재)이 클수록 “교육/훈련 필요도”가 큰 것으로 해석합니다.
     </div>
   `;
+
+  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
 
-// 페이지 로딩 시 문항 렌더
+// 로딩 시 문항 렌더
 renderQuestions();
