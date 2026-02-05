@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>공동훈련센터 전담자 역량진단</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif; background:#f6f7f9; margin:0;}
+    .wrap { max-width: 900px; margin:auto; padding:16px;}
+    .card { background:#fff; border-radius:12px; padding:16px; margin:12px 0;}
+    .q { border-bottom:1px solid #eee; padding:8px 0;}
+    button { padding:10px 14px; border:0; border-radius:8px;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>공동훈련센터 전담자 역량진단</h1>
+
+  <div class="card">
+    경력:
+    <select id="career">
+      <option value="lt1">1년 미만</option>
+      <option value="1to2">1~2년</option>
+      <option value="2to4">2~4년</option>
+      <option value="gte4">4년 이상</option>
+    </select>
+  </div>
+
+  <div class="card" id="questionList"></div>
+  <button onclick="submitTest()">결과 보기</button>
+
+  <div class="card" id="result" style="display:none;">
+    <p id="summary"></p>
+    <canvas id="chart"></canvas>
+    <div id="recommend"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
