@@ -301,7 +301,7 @@ function submitTest() {
     <div style="font-size:13px; opacity:.85;">
       * Gap(이상-현재)이 클수록 “교육/훈련 필요도”가 큰 것으로 해석합니다.
     </div>
-  ` + courseHtml;   // ✅ 여기! courseHtml 이어붙이기
+  ` + courseHtml;
 
   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
