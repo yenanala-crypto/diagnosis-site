@@ -53,6 +53,57 @@ const questions = [
   { id: "43", domain: "교육과정운영자", competency: "훈련인프라 활용역량", text: "보유한 시설 장비를 적절하게 활용하고 시설장비를 목표시간 대비 활용할 수 있도록 관리할 수 있다." },
 ];
 
+// 2026 커리큘럼 기반 과정 목록 + 키워드(초안)
+const COURSES = [
+  { code:"1-1", category:"사업운영 및 조직관리", name:"일학습병행 첫걸음", hours:"1일(7H)", level:["신규"],
+    keywords:["일학습병행","사업개요","역할","규정","운영지침","프로세스","기초","행정"] },
+  { code:"1-2", category:"사업운영 및 조직관리", name:"[법인별] 사업회계실무", hours:"1일(7H)", level:["신규","실무"],
+    keywords:["회계","정산","집행","증빙","예산","감사","지출","회계감사","정산기준"] },
+  { code:"1-3", category:"사업운영 및 조직관리", name:"AI를 활용한 문서 작성 실무", hours:"1일(7H)", level:["실무"],
+    keywords:["AI","문서","보고서","기획서","회의록","공문","요약","작성","업무자동화","프롬프트"] },
+  { code:"1-4", category:"사업운영 및 조직관리", name:"일학습병행 성과관리 리더십", hours:"1일(7H)", level:["숙련"],
+    keywords:["성과관리","지표","KPI","성과분석","리더십","성과개선","목표설정","성과보고"] },
+  { code:"1-5", category:"사업운영 및 조직관리", name:"일학습병행 전략적 조직 운영", hours:"1일(7H)", level:["책임"],
+    keywords:["전략","조직운영","거버넌스","의사결정","중장기계획","성과체계","조직관리"] },
+
+  { code:"2-1", category:"학습기업 및 학습근로자 관리", name:"학습기업 발굴 및 관리", hours:"1일(7H)", level:["신규","실무"],
+    keywords:["학습기업","기업발굴","홍보","모집","파트너십","관리","네트워킹","영업","설명회"] },
+  { code:"2-2", category:"학습기업 및 학습근로자 관리", name:"학습근로자 면담 스킬", hours:"1일(7H)", level:["숙련"],
+    keywords:["학습근로자","면담","상담","코칭","의사소통","갈등","고충","동기부여","피드백"] },
+  { code:"2-3", category:"학습기업 및 학습근로자 관리", name:"일학습병행 비즈니스 협상 전략", hours:"1일(7H)", level:["책임"],
+    keywords:["협상","설득","조정","이해관계자","대외협력","합의","커뮤니케이션","계약"] },
+
+  { code:"3-1", category:"훈련과정 운영 및 지원", name:"일학습병행 HRD-Net 기초실습", hours:"2일(12H)", level:["신규"],
+    keywords:["HRD-Net","LMS","시스템","등록","출결","수료","훈련관리","운영실습","전산"] },
+  { code:"3-2", category:"훈련과정 운영 및 지원", name:"일학습병행과정개발(PDMS) 이해", hours:"1일(7H)", level:["신규"],
+    keywords:["PDMS","과정개발","훈련과정","모듈","NCS","능력단위","편성","개발절차","학습자료"] },
+  { code:"3-3A", category:"훈련과정 운영 및 지원", name:"[유형별] 일학습병행 훈련품질 관리(재직/재학)", hours:"2일(12H)", level:["실무"],
+    keywords:["훈련품질","품질관리","모니터링","점검","부정훈련","평가","피드백","운영관리","재직","재학"] },
+  { code:"3-3B", category:"훈련과정 운영 및 지원", name:"[유형별] 일학습병행 훈련품질 관리(도제)", hours:"2일(12H)", level:["실무"],
+    keywords:["훈련품질","품질관리","모니터링","점검","부정훈련","평가","피드백","운영관리","도제"] },
+  { code:"3-4", category:"훈련과정 운영 및 지원", name:"사례로 풀어보는 일학습병행 인사노무", hours:"1일(7H)", level:["숙련"],
+    keywords:["인사노무","근로","노무","노동법","사례","분쟁","규정","리스크","인사"] },
+  { code:"3-5", category:"훈련과정 운영 및 지원", name:"일학습병행 산업안전 및 위험성 관리", hours:"1일(7H)", level:["책임"],
+    keywords:["산업안전","위험성","안전관리","리스크","점검","사고예방","법규","안전"] },
+
+  { code:"4-1", category:"공통 업무역량", name:"일학습병행 현장에서 활용하는 AI 스마트 워킹", hours:"1일(7H)", level:["전체"],
+    keywords:["AI","스마트워킹","업무자동화","문서","요약","기획","생성형AI","업무개선"] },
+  { code:"4-2", category:"공통 업무역량", name:"AI 활용 홍보 콘텐츠 기획 및 제작", hours:"1일(7H)", level:["전체"],
+    keywords:["AI","홍보","콘텐츠","기획","제작","카피","이미지","SNS","마케팅"] },
+  { code:"4-3", category:"공통 업무역량", name:"일학습병행 데이터관리 A to Z", hours:"2일(12H)", level:["전체"],
+    keywords:["데이터","데이터관리","엑셀","정리","분석","대시보드","리포트","통계","지표"] },
+];
+
+const DOMAIN_TO_CATEGORY = {
+  "공통": ["공통 업무역량", "사업운영 및 조직관리"],
+  "사업관리자": ["사업운영 및 조직관리"],
+  "사업운영자": ["사업운영 및 조직관리", "학습기업 및 학습근로자 관리", "훈련과정 운영 및 지원"],
+  "HRD컨설턴트": ["훈련과정 운영 및 지원", "사업운영 및 조직관리"],
+  "경력개발상담가": ["학습기업 및 학습근로자 관리"],
+  "교육과정개발자": ["훈련과정 운영 및 지원"],
+  "교육과정운영자": ["훈련과정 운영 및 지원"],
+};
+
 function likert(name, checkedValue = null) {
   return `
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin:6px 0 10px 0;">
@@ -113,8 +164,34 @@ function getValue(name) {
   return el ? parseInt(el.value, 10) : null;
 }
 
+function norm(s){
+  return (s || "").toString().toLowerCase().replace(/\s+/g,"");
+}
+
+function recommendCourses(topDomains, topItems) {
+  const targetCats = [...new Set(topDomains.flatMap(d => DOMAIN_TO_CATEGORY[d] || []))];
+  const corpus = norm(topItems.map(x => `${x.domain} ${x.competency}`).join(" "));
+
+  const scored = COURSES.map(c => {
+    let score = 0;
+    if (targetCats.includes(c.category)) score += 2;
+    if (c.category === "공통 업무역량") score += 1;
+
+    let hit = 0;
+    for (const kw of (c.keywords || [])) {
+      if (corpus.includes(norm(kw))) hit += 1;
+    }
+    score += Math.min(hit, 6);
+
+    return { ...c, score, hit };
+  })
+  .filter(x => x.score > 0)
+  .sort((a,b) => b.score - a.score);
+
+  return scored.slice(0, 6);
+}
+
 function submitTest() {
-  // 미응답 체크(현재+이상 둘 다)
   const missing = [];
   for (const q of questions) {
     const cur = getValue(`q${q.id}_cur`);
@@ -126,9 +203,8 @@ function submitTest() {
     return;
   }
 
-  // 집계
-  const domainStats = {}; // {domain:{cur:[], ideal:[], gap:[]}}
-  const itemGaps = [];    // 문항별 gap 랭킹용
+  const domainStats = {};
+  const itemGaps = [];
 
   questions.forEach(q => {
     const cur = getValue(`q${q.id}_cur`);
@@ -153,20 +229,16 @@ function submitTest() {
   const avg = (arr) => arr.reduce((a,b)=>a+b,0) / arr.length;
 
   const domains = Object.keys(domainStats);
-  const domainCur = domains.map(d => avg(domainStats[d].cur));
-  const domainIdeal = domains.map(d => avg(domainStats[d].ideal));
   const domainGap = domains.map(d => avg(domainStats[d].gap));
 
   const overallCur = avg(itemGaps.map(x => x.cur));
   const overallIdeal = avg(itemGaps.map(x => x.ideal));
   const overallGap = avg(itemGaps.map(x => x.gap));
 
-  // 결과 표시
   document.getElementById("result").style.display = "block";
   document.getElementById("summary").textContent =
     `전체 평균(현재): ${overallCur.toFixed(2)} / 5.00 · 전체 평균(이상): ${overallIdeal.toFixed(2)} / 5.00 · 전체 평균(Gap): ${overallGap.toFixed(2)}`;
 
-  // 차트: 도메인별 Gap (교육 필요도)
   if (window._chart) window._chart.destroy();
   const ctx = document.getElementById("chart").getContext("2d");
   window._chart = new Chart(ctx, {
@@ -180,14 +252,33 @@ function submitTest() {
     options: { scales: { y: { min: -4, max: 4 } } }
   });
 
-  // 문항별 Gap TOP 10 (교육 필요 역량)
   itemGaps.sort((a,b) => b.gap - a.gap);
   const top = itemGaps.slice(0, 10);
 
-  // 도메인별 Gap 우선순위 2개
   const domainRank = domains
     .map((d, i) => ({ domain: d, gap: domainGap[i] }))
     .sort((a,b) => b.gap - a.gap);
+
+  // ✅ 여기서 추천 과정 계산
+  const topDomains = domainRank.slice(0, 2).map(x => x.domain);
+  const courseReco = recommendCourses(topDomains, top);
+
+  // ✅ 추천 과정 HTML 생성
+  const courseHtml = `
+    <h3>추천 교육과정(2026 커리큘럼 기반 · Gap+키워드 매칭)</h3>
+    <ol>
+      ${courseReco.map(c => `
+        <li style="margin-bottom:10px;">
+          <b>${c.name}</b> <span style="opacity:.75;">(${c.code} · ${c.hours})</span><br/>
+          <span style="opacity:.85;">영역: ${c.category} · 키워드매칭: ${c.hit} · 권장수준(참고): ${c.level.join(", ")}</span><br/>
+          <span style="font-size:13px; opacity:.8;">키워드: ${(c.keywords || []).slice(0,6).join(", ")}${(c.keywords||[]).length>6 ? "…" : ""}</span>
+        </li>
+      `).join("")}
+    </ol>
+    <div style="font-size:13px; opacity:.85;">
+      * 경력과 무관하게 “역량 격차(Gap) 큰 영역” + “TOP10 역량 키워드” 매칭으로 추천합니다.
+    </div>
+  `;
 
   const recommend = document.getElementById("recommend");
   recommend.innerHTML = `
@@ -210,7 +301,7 @@ function submitTest() {
     <div style="font-size:13px; opacity:.85;">
       * Gap(이상-현재)이 클수록 “교육/훈련 필요도”가 큰 것으로 해석합니다.
     </div>
-  `;
+  ` + courseHtml;   // ✅ 여기! courseHtml 이어붙이기
 
   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
