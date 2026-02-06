@@ -1,5 +1,6 @@
 // app.js - 20문항: 현재수준 + 이상적수준(요구수준) 2중 체크 + Gap 분석
 // Gap = 이상적(요구) - 현재(숙련). Gap이 클수록 교육 필요도가 큼
+const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwPbs7mqnKZ41CbhtOZD1IHCdJu-PAJcfwz6RCAeVJxYn_koTOh5WzFmtw-7WjUhbHLuw/exec";
 
 const questions = [
   // 1) 공통역량 (6)
@@ -143,6 +144,21 @@ function getValue(name) {
 function norm(s){
   return (s || "").toString().toLowerCase().replace(/\s+/g,"");
 }
+async function saveToGoogleSheet(payload) {
+  if (!SHEETS_WEBAPP_URL || SHEETS_WEBAPP_URL.includes("여기에")) {
+    console.warn("SHEETS_WEBAPP_URL 미설정: 저장 건너뜀");
+    return { ok: false, skipped: true };
+  }
+
+  const res = await fetch(SHEETS_WEBAPP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return { ok: false, raw: text }; }
+}
 
 function recommendCourses(topDomains, topItems) {
   const targetCats = [...new Set(topDomains.flatMap(d => DOMAIN_TO_CATEGORY[d] || []))];
@@ -210,6 +226,25 @@ function submitTest() {
   const overallCur = avg(itemGaps.map(x => x.cur));
   const overallIdeal = avg(itemGaps.map(x => x.ideal));
   const overallGap = avg(itemGaps.map(x => x.gap));
+  // ✅ 구글시트 저장(누적)
+  const savePayload = {
+    userAgent: navigator.userAgent,
+    overallCur: Number(overallCur.toFixed(2)),
+    overallIdeal: Number(overallIdeal.toFixed(2)),
+    overallGap: Number(overallGap.toFixed(2)),
+    items: itemGaps.map(x => ({
+      id: x.id,
+      domain: x.domain,
+      competency: x.competency,
+      cur: x.cur,
+      ideal: x.ideal,
+      gap: x.gap
+    })),
+  };
+
+  saveToGoogleSheet(savePayload)
+    .then(r => { if (!r || !r.ok) console.warn("시트 저장 실패:", r); })
+    .catch(err => console.warn("시트 저장 에러:", err));
 
   document.getElementById("result").style.display = "block";
   document.getElementById("summary").textContent =
