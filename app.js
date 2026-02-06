@@ -77,7 +77,7 @@ const COURSES = [
 const DOMAIN_TO_CATEGORY = {
   "공통": ["공통 업무역량", "사업운영 및 조직관리"],
   "사업운영(실무)": ["사업운영 및 조직관리", "학습기업 및 학습근로자 관리", "훈련과정 운영 및 지원"],
-  "사업관리(팀장)": ["사업운영 및 조직관리", "공통 업무역량"],
+  "사업관리": ["사업운영 및 조직관리", "공통 업무역량"],
   "HRD전문": ["훈련과정 운영 및 지원", "사업운영 및 조직관리"],
 };
 
@@ -164,17 +164,6 @@ async function saveToGoogleSheet(payload) {
     console.warn("시트 저장 에러:", err);
     return { ok: false, error: String(err) };
   }
-}
-
-
-  const res = await fetch(SHEETS_WEBAPP_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload),
-  });
-
-  const text = await res.text();
-  try { return JSON.parse(text); } catch { return { ok: false, raw: text }; }
 }
 
 function recommendCourses(topDomains, topItems) {
