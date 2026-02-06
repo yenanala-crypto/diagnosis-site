@@ -154,23 +154,21 @@ function norm(s){
   return (s || "").toString().toLowerCase().replace(/\s+/g,"");
 }
 
-async function saveToGoogleSheet(payload) {
-  if (!SHEETS_WEBAPP_URL) return { ok:false };
-
+function saveToGoogleSheet(payload) {
   try {
-    // CORS 회피: 응답을 읽지 않는 방식(no-cors)
-    await fetch(SHEETS_WEBAPP_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload),
+    if (!SHEETS_WEBAPP_URL) return;
+
+    const blob = new Blob([JSON.stringify(payload)], {
+      type: "text/plain;charset=utf-8"
     });
-    return { ok: true };
+
+    const ok = navigator.sendBeacon(SHEETS_WEBAPP_URL, blob);
+    if (!ok) console.warn("sendBeacon 전송 실패(브라우저가 거부했을 수 있음)");
   } catch (err) {
-    console.warn("시트 저장 에러:", err);
-    return { ok: false, error: String(err) };
+    console.warn("sendBeacon 에러:", err);
   }
 }
+
 
 function recommendCourses(topDomains, topItems) {
   const targetCats = [...new Set(topDomains.flatMap(d => DOMAIN_TO_CATEGORY[d] || []))];
@@ -240,7 +238,7 @@ function submitTest() {
     overallGap: Number(overallGap.toFixed(2)),
     items: itemGaps
   };
-  saveToGoogleSheet(savePayload).catch(()=>{});
+saveToGoogleSheet(savePayload);
 
   document.getElementById("result").style.display = "block";
   document.getElementById("summary").textContent =
