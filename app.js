@@ -2,7 +2,7 @@
 // Gap = 이상적(요구) - 현재(숙련). Gap이 클수록 교육 필요도가 큼
 
 const SHEETS_WEBAPP_URL =
-  "https://script.google.com/macros/s/AKfycbwPbs7mqnKZ41CbhtOZD1IHCdJu-PAJcfwz6RCAeVJxYn_koTOh5WzFmtw-7WjUhbHLuw/exec";
+  "https://script.google.com/macros/s/AKfycbzHOtYbGLgFgF1UtF-HA2V-epqcrvAO2ROfyjSZn7uA2Kux2Lt6H3n0QxVmqyF3BJ4P/exec";
 
 const questions = [
   // 1) 공통역량 (6)
