@@ -1,6 +1,8 @@
 // app.js - 20문항: 현재수준 + 이상적수준(요구수준) 2중 체크 + Gap 분석
 // Gap = 이상적(요구) - 현재(숙련). Gap이 클수록 교육 필요도가 큼
-const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwPbs7mqnKZ41CbhtOZD1IHCdJu-PAJcfwz6RCAeVJxYn_koTOh5WzFmtw-7WjUhbHLuw/exec";
+
+const SHEETS_WEBAPP_URL =
+  "https://script.google.com/macros/s/AKfycbwPbs7mqnKZ41CbhtOZD1IHCdJu-PAJcfwz6RCAeVJxYn_koTOh5WzFmtw-7WjUhbHLuw/exec";
 
 const questions = [
   // 1) 공통역량 (6)
@@ -73,7 +75,7 @@ const COURSES = [
     keywords:["데이터","데이터관리","엑셀","정리","분석","대시보드","리포트","통계","지표"] },
 ];
 
-// ✅ 20문항 도메인에 맞춘 카테고리 맵핑(중요: 기존 도메인명 변경 반영)
+// 20문항 도메인에 맞춘 카테고리 맵핑
 const DOMAIN_TO_CATEGORY = {
   "공통": ["공통 업무역량", "사업운영 및 조직관리"],
   "사업운영(실무)": ["사업운영 및 조직관리", "학습기업 및 학습근로자 관리", "훈련과정 운영 및 지원"],
@@ -95,6 +97,13 @@ function likert(name, checkedValue = null) {
 
 function renderQuestions() {
   const container = document.getElementById("questionList");
+
+  // ✅ 여기서 null이면 문항이 안 뜸 → HTML id 불일치/스크립트 실행 타이밍 문제
+  if (!container) {
+    console.error('❌ #questionList 요소를 찾을 수 없습니다. index.html에 id="questionList"가 있는지 확인하세요.');
+    return;
+  }
+
   container.innerHTML = `
     <div style="font-size:13px; opacity:.85; margin-bottom:12px;">
       <b>현재수준</b>은 현재 본인의 역량 수준, <b>이상적수준</b>은 업무 수행을 위해 필요하다고 생각하는 수준(요구수준)입니다.<br/>
@@ -144,11 +153,9 @@ function getValue(name) {
 function norm(s){
   return (s || "").toString().toLowerCase().replace(/\s+/g,"");
 }
+
 async function saveToGoogleSheet(payload) {
-  if (!SHEETS_WEBAPP_URL || SHEETS_WEBAPP_URL.includes("여기에")) {
-    console.warn("SHEETS_WEBAPP_URL 미설정: 저장 건너뜀");
-    return { ok: false, skipped: true };
-  }
+  if (!SHEETS_WEBAPP_URL) return { ok:false };
 
   try {
     // CORS 회피: 응답을 읽지 않는 방식(no-cors)
@@ -158,7 +165,6 @@ async function saveToGoogleSheet(payload) {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload),
     });
-
     return { ok: true };
   } catch (err) {
     console.warn("시트 저장 에러:", err);
@@ -214,14 +220,7 @@ function submitTest() {
     domainStats[q.domain].ideal.push(ideal);
     domainStats[q.domain].gap.push(gap);
 
-    itemGaps.push({
-      id: q.id,
-      domain: q.domain,
-      competency: q.competency,
-      cur,
-      ideal,
-      gap
-    });
+    itemGaps.push({ id: q.id, domain: q.domain, competency: q.competency, cur, ideal, gap });
   });
 
   const avg = (arr) => arr.reduce((a,b)=>a+b,0) / arr.length;
@@ -232,25 +231,16 @@ function submitTest() {
   const overallCur = avg(itemGaps.map(x => x.cur));
   const overallIdeal = avg(itemGaps.map(x => x.ideal));
   const overallGap = avg(itemGaps.map(x => x.gap));
-  // ✅ 구글시트 저장(누적)
+
+  // ✅ 구글시트 저장(누적) - 실패해도 화면은 계속 보여주기
   const savePayload = {
     userAgent: navigator.userAgent,
     overallCur: Number(overallCur.toFixed(2)),
     overallIdeal: Number(overallIdeal.toFixed(2)),
     overallGap: Number(overallGap.toFixed(2)),
-    items: itemGaps.map(x => ({
-      id: x.id,
-      domain: x.domain,
-      competency: x.competency,
-      cur: x.cur,
-      ideal: x.ideal,
-      gap: x.gap
-    })),
+    items: itemGaps
   };
-
-  saveToGoogleSheet(savePayload)
-    .then(r => { if (!r || !r.ok) console.warn("시트 저장 실패:", r); })
-    .catch(err => console.warn("시트 저장 에러:", err));
+  saveToGoogleSheet(savePayload).catch(()=>{});
 
   document.getElementById("result").style.display = "block";
   document.getElementById("summary").textContent =
@@ -260,12 +250,7 @@ function submitTest() {
   const ctx = document.getElementById("chart").getContext("2d");
   window._chart = new Chart(ctx, {
     type: "bar",
-    data: {
-      labels: domains,
-      datasets: [
-        { label: "Gap 평균(이상-현재)", data: domainGap.map(x => Number(x.toFixed(2))) }
-      ]
-    },
+    data: { labels: domains, datasets: [{ label: "Gap 평균(이상-현재)", data: domainGap.map(x => Number(x.toFixed(2))) }] },
     options: { scales: { y: { min: -4, max: 4 } } }
   });
 
@@ -276,11 +261,9 @@ function submitTest() {
     .map((d, i) => ({ domain: d, gap: domainGap[i] }))
     .sort((a,b) => b.gap - a.gap);
 
-  // ✅ 여기서 추천 과정 계산
   const topDomains = domainRank.slice(0, 2).map(x => x.domain);
   const courseReco = recommendCourses(topDomains, top);
 
-  // ✅ 추천 과정 HTML 생성
   const courseHtml = `
     <h3>추천 교육과정(2026 커리큘럼 기반 · Gap+키워드 매칭)</h3>
     <ol>
@@ -323,5 +306,10 @@ function submitTest() {
   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
 
-// 로딩 시 문항 렌더
-renderQuestions();
+// ✅ DOM이 다 그려진 다음에 렌더 (이게 핵심)
+document.addEventListener("DOMContentLoaded", () => {
+  renderQuestions();
+});
+
+// submitTest는 HTML 버튼에서 onclick="submitTest()"로 호출하는 구조를 유지
+window.submitTest = submitTest;
