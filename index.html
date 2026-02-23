@@ -4,13 +4,244 @@
   <meta charset="utf-8" />
   <title>공동훈련센터 전담자 역량진단</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif; background:#f6f7f9; margin:0;}
-    .wrap { max-width: 900px; margin:auto; padding:16px;}
-    .card { background:#fff; border-radius:12px; padding:16px; margin:12px 0;}
-    .q { border-bottom:1px solid #eee; padding:8px 0;}
-    button { padding:10px 14px; border:0; border-radius:8px;}
-  </style>
+<style>
+  :root{
+    --bg:#f6f7fb;
+    --card:#ffffff;
+    --text:#111827;
+    --muted:#6b7280;
+    --line:#e5e7eb;
+    --brand:#22c55e;
+    --brand2:#16a34a;
+    --shadow: 0 10px 30px rgba(17,24,39,.08);
+    --radius: 16px;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+    color:var(--text);
+    background: radial-gradient(1200px 600px at 10% 0%, rgba(34,197,94,.15), transparent 60%),
+                radial-gradient(1200px 600px at 90% 0%, rgba(59,130,246,.10), transparent 60%),
+                var(--bg);
+  }
+
+  .page{
+    max-width: 980px;
+    margin: 40px auto 80px;
+    padding: 0 18px;
+  }
+
+  .hero{
+    background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(255,255,255,.8));
+    border: 1px solid rgba(34,197,94,.18);
+    border-radius: calc(var(--radius) + 8px);
+    padding: 26px 22px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+
+  .hero h1{
+    margin:0 0 10px;
+    font-size: 30px;
+    letter-spacing: -0.3px;
+  }
+
+  .hero p{
+    margin:0;
+    color: var(--muted);
+    line-height: 1.55;
+    font-size: 14px;
+  }
+
+  .toolbar{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top: 14px;
+  }
+
+  .field{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: rgba(255,255,255,.9);
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .field label{
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  select, input[type="text"]{
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-top: 14px;
+  }
+
+  .section-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin: 14px 0 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #f9fafb;
+    border: 1px solid var(--line);
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(34,197,94,.12);
+    border: 1px solid rgba(34,197,94,.25);
+  }
+
+  /* 질문 블록 */
+  .q{
+    padding: 14px 6px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .q:last-child{ border-bottom: 0; }
+
+  .q .title{
+    font-weight: 800;
+    margin-bottom: 8px;
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .qid{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 10px;
+    background: #111827;
+    color: white;
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  .q .desc{
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  .scale{
+    background:#f9fafb;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  .scale .label{
+    font-weight: 700;
+    font-size: 13px;
+    margin: 8px 0 6px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--brand);
+    display:inline-block;
+  }
+
+  /* 라디오를 카드형으로 */
+  .likert{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin: 6px 0 10px;
+  }
+  .likert label{
+    position: relative;
+    cursor: pointer;
+    user-select:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: white;
+    transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease;
+    font-size: 14px;
+  }
+  .likert label:hover{
+    transform: translateY(-1px);
+    border-color: rgba(34,197,94,.35);
+    box-shadow: 0 8px 18px rgba(34,197,94,.12);
+  }
+  .likert input[type="radio"]{
+    accent-color: var(--brand);
+    transform: scale(1.05);
+  }
+
+  /* 하단 제출 버튼 */
+  .actions{
+    position: sticky;
+    bottom: 14px;
+    margin-top: 18px;
+    display:flex;
+    justify-content:flex-end;
+    z-index: 10;
+  }
+  .btn{
+    background: linear-gradient(135deg, var(--brand), var(--brand2));
+    color: white;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 18px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 12px 30px rgba(34,197,94,.25);
+    transition: transform .1s ease;
+  }
+  .btn:hover{ transform: translateY(-1px); }
+  .btn:active{ transform: translateY(0); }
+
+  /* 결과 영역 */
+  #result{
+    margin-top: 18px;
+  }
+
+  /* 모바일 */
+  @media (max-width: 520px){
+    .hero h1{ font-size: 24px; }
+    .qid{ min-width: 30px; height: 30px; }
+    .actions{ justify-content: center; }
+    .btn{ width: 100%; }
+  }
+</style>
 </head>
 <body>
 <div class="wrap">
