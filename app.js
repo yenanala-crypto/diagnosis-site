@@ -154,21 +154,72 @@ function norm(s){
   return (s || "").toString().toLowerCase().replace(/\s+/g,"");
 }
 
+/**
+ * ✅ 구글시트 저장 (GitHub Pages ↔ Apps Script 안정형)
+ * - 1순위: fetch(cors + application/json + keepalive)
+ * - 2순위: fetch(no-cors + keepalive)  ※ 응답은 못 읽어도 "전송" 확률 높음
+ * - 3순위: sendBeacon 폴백
+ *
+ * Apps Script doPost(e)에서 e.postData.contents(JSON)을 파싱하는 형태에 가장 잘 맞음.
+ */
 function saveToGoogleSheet(payload) {
+  if (!SHEETS_WEBAPP_URL) return;
+
+  const data = {
+    ...payload,
+    sentAt: new Date().toISOString(),
+    pageUrl: location.href,
+    referrer: document.referrer || "",
+  };
+
+  const body = JSON.stringify(data);
+
+  // 1) fetch (CORS 허용이면 가장 깔끔)
   try {
-    if (!SHEETS_WEBAPP_URL) return;
-
-    const blob = new Blob([JSON.stringify(payload)], {
-      type: "text/plain;charset=utf-8"
+    fetch(SHEETS_WEBAPP_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json;charset=utf-8" },
+      body,
+      keepalive: true,
+    })
+    .then(res => {
+      // CORS가 제대로 열려 있으면 ok 체크 가능
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.text().catch(() => "");
+    })
+    .catch(() => {
+      // 2) no-cors 폴백: 응답을 읽을 수 없지만 전송 자체는 되는 경우가 많음
+      return fetch(SHEETS_WEBAPP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        // no-cors에서는 실제로 커스텀 헤더가 제한되지만, 있어도 무시될 뿐이라 넣어둠
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body,
+        keepalive: true,
+      }).catch(() => {
+        // 3) 최후 sendBeacon 폴백
+        try {
+          const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
+          const ok = navigator.sendBeacon(SHEETS_WEBAPP_URL, blob);
+          if (!ok) console.warn("sendBeacon 전송 실패(브라우저가 거부했을 수 있음)");
+        } catch (e) {
+          console.warn("sendBeacon 에러:", e);
+        }
+      });
     });
-
-    const ok = navigator.sendBeacon(SHEETS_WEBAPP_URL, blob);
-    if (!ok) console.warn("sendBeacon 전송 실패(브라우저가 거부했을 수 있음)");
   } catch (err) {
-    console.warn("sendBeacon 에러:", err);
+    console.warn("fetch 에러:", err);
+    // fetch 자체가 터지는 환경이면 beacon 시도
+    try {
+      const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
+      const ok = navigator.sendBeacon(SHEETS_WEBAPP_URL, blob);
+      if (!ok) console.warn("sendBeacon 전송 실패(브라우저가 거부했을 수 있음)");
+    } catch (e) {
+      console.warn("sendBeacon 에러:", e);
+    }
   }
 }
-
 
 function recommendCourses(topDomains, topItems) {
   const targetCats = [...new Set(topDomains.flatMap(d => DOMAIN_TO_CATEGORY[d] || []))];
@@ -238,7 +289,7 @@ function submitTest() {
     overallGap: Number(overallGap.toFixed(2)),
     items: itemGaps
   };
-saveToGoogleSheet(savePayload);
+  saveToGoogleSheet(savePayload);
 
   document.getElementById("result").style.display = "block";
   document.getElementById("summary").textContent =
