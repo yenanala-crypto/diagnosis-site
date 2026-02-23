@@ -85,16 +85,15 @@ const DOMAIN_TO_CATEGORY = {
 
 function likert(name, checkedValue = null) {
   return `
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin:6px 0 10px 0;">
+    <div class="likert">
       ${[1,2,3,4,5].map(v => `
-        <label style="margin-right:6px;">
+        <label>
           <input type="radio" name="${name}" value="${v}" ${checkedValue===v ? "checked": ""}/> ${v}
         </label>
       `).join("")}
     </div>
   `;
 }
-
 function renderQuestions() {
   const container = document.getElementById("questionList");
 
@@ -128,17 +127,20 @@ function renderQuestions() {
       div.style.padding = "10px 0";
       div.style.borderBottom = "1px solid #eee";
 
-      div.innerHTML = `
-        <div style="font-weight:700; margin-bottom:6px;">${q.id}. ${q.competency}</div>
-        <div style="margin-bottom:10px;">${q.text}</div>
+     div.innerHTML = `
+  <div class="title">
+    <span class="qid">${q.id}</span>
+    <div>${q.competency}</div>
+  </div>
+  <div class="desc">${q.text}</div>
 
-        <div style="background:#f3f5f7; padding:10px; border-radius:10px;">
-          <div style="font-weight:600;">현재수준</div>
-          ${likert(`q${q.id}_cur`)}
-          <div style="font-weight:600;">이상적수준(요구수준)</div>
-          ${likert(`q${q.id}_ideal`)}
-        </div>
-      `;
+  <div class="scale">
+    <div class="label"><span class="dot"></span>현재수준</div>
+    ${likert(`q${q.id}_cur`)}
+    <div class="label"><span class="dot"></span>이상적수준(요구수준)</div>
+    ${likert(`q${q.id}_ideal`)}
+  </div>
+`;
 
       container.appendChild(div);
     });
