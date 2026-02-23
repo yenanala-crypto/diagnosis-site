@@ -244,29 +244,42 @@
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>공동훈련센터 전담자 역량진단</h1>
+  <div class="page">
+    <div class="hero">
+      <h1>공동훈련센터 전담자 역량진단</h1>
+      <p>
+        현재수준은 현재 본인의 역량 수준, 이상적수준은 업무 수행을 위해 필요하다고 생각하는 수준(요구수준)입니다.
+        각 문항에 대해 현재수준 + 이상적수준을 모두 선택해주세요. (1~5점)
+      </p>
 
-  <div class="card">
-    경력:
-    <select id="career">
-      <option value="lt1">1년 미만</option>
-      <option value="1to2">1~2년</option>
-      <option value="2to4">2~4년</option>
-      <option value="gte4">4년 이상</option>
-    </select>
+      <div class="toolbar">
+        <div class="field">
+          <label>경력</label>
+          <select id="career">
+            <option value="lt1">1년 미만</option>
+            <option value="1to2">1~2년</option>
+            <option value="2to4">2~4년</option>
+            <option value="5plus">5년 이상</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="questionList"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="submitTest()">결과 보기</button>
+    </div>
+
+    <div id="result" class="card" style="display:none;">
+      <div id="summary"></div>
+      <canvas id="chart" style="margin-top:14px;"></canvas>
+      <div id="recommend" style="margin-top:16px;"></div>
+    </div>
   </div>
 
-  <div class="card" id="questionList"></div>
-  <button onclick="submitTest()">결과 보기</button>
-
-  <div class="card" id="result" style="display:none;">
-    <p id="summary"></p>
-    <canvas id="chart"></canvas>
-    <div id="recommend"></div>
-  </div>
-</div>
-
-<script src="app.js?v=7"></script>
+  <script src="app.js"></script>
 </body>
 </html>
